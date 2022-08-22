@@ -13,7 +13,6 @@ import (
 //
 // A Once must not be copied after first use.
 type Once struct {
-	wg sync.WaitGroup
 	// done indicates whether the action has been performed.
 	// It is first in the struct because it is used in the hot path.
 	// The hot path is inlined at every call site.
@@ -76,15 +75,12 @@ func (o *Once) Do(f func()) {
 func (o *Once) Reset() {
 	o.m.Lock()
 	defer o.m.Unlock()
-	o.wg.Wait()
 	atomic.StoreUint32(&o.done, 0)
 }
 
 func (o *Once) doSlow(f func()) {
 	o.m.Lock()
 	defer o.m.Unlock()
-	o.wg.Add(1)
-	defer o.wg.Done()
 	if o.done == 0 {
 		defer atomic.StoreUint32(&o.done, 1)
 		f()

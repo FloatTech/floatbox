@@ -7,11 +7,13 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 	"unsafe"
 
 	reg "github.com/fumiama/go-registry"
 	"github.com/sirupsen/logrus"
+	"github.com/wdvxdr1123/ZeroBot/extension/ttl"
 
 	"github.com/FloatTech/floatbox/process"
 )
@@ -21,9 +23,21 @@ const (
 )
 
 var (
-	registry = reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
-	connerr  error
-	once     = process.NewOnce()
+	mu      sync.Mutex
+	connmap = ttl.NewCacheOn(time.Second*3, [4]func(struct{}, *reg.Regedit){
+		func(s struct{}, r *reg.Regedit) {
+			logrus.Infoln("[file]已连接md5验证服务器")
+		},
+		func(s struct{}, r *reg.Regedit) {
+			logrus.Infoln("[file]重用md5验证服务器")
+		},
+		func(s struct{}, r *reg.Regedit) {
+			process.GlobalInitMutex.Lock()
+			_ = r.Close()
+			logrus.Infoln("[file]关闭到md5验证服务器的连接")
+			process.GlobalInitMutex.Unlock()
+		}, nil,
+	})
 )
 
 // GetLazyData 获取懒加载数据
@@ -39,31 +53,26 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 
 	u := dataurl + path[5:]
 
-	once.Do(func() {
-		connerr = registry.ConnectIn(time.Second * 4)
-		if connerr != nil {
-			logrus.Warnln("[file]连接md5验证服务器失败:", connerr)
-			return
+	r := connmap.Get(struct{}{})
+	if r == nil {
+		mu.Lock()
+		if r == nil {
+			r = reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
+			connerr := r.ConnectIn(time.Second * 4)
+			if connerr != nil {
+				logrus.Warnln("[file]连接md5验证服务器失败:", connerr)
+				mu.Unlock()
+				return nil, connerr
+			}
+			connmap.Set(struct{}{}, r)
 		}
-		logrus.Infoln("[file]已连接md5验证服务器")
-		go func() {
-			process.GlobalInitMutex.Lock()
-			time.Sleep(time.Second * 3)
-			_ = registry.Close()
-			registry.Lock()
-			connerr = nil
-			once.Reset()
-			registry.Unlock()
-			logrus.Infoln("[file]关闭到md5验证服务器的连接")
-			process.GlobalInitMutex.Unlock()
-		}()
-	})
+		mu.Unlock()
+	}
 
-	if connerr != nil {
+	if r == nil {
 		logrus.Warnln("[file]无法连接到md5验证服务器, 请自行确保下载文件", path, "的正确性")
-		once.Reset()
 	} else {
-		ms, err = registry.Get(path)
+		ms, err = r.Get(path)
 		if err != nil || len(ms) != 16 {
 			logrus.Warnln("[file]获取md5失败, 请自行确保下载文件", path, "的正确性:", err)
 		} else {
