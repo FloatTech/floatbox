@@ -13,7 +13,8 @@ import (
 
 	reg "github.com/fumiama/go-registry"
 	"github.com/sirupsen/logrus"
-	"github.com/wdvxdr1123/ZeroBot/extension/ttl"
+
+	"github.com/FloatTech/ttl"
 
 	"github.com/FloatTech/floatbox/process"
 )
