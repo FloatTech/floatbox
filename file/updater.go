@@ -4,8 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"io"
-	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -17,6 +15,7 @@ import (
 	"github.com/FloatTech/ttl"
 
 	"github.com/FloatTech/floatbox/process"
+	"github.com/FloatTech/floatbox/web"
 )
 
 const (
@@ -47,12 +46,11 @@ var (
 // 以便进行下载
 func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 	var data []byte
-	var resp *http.Response
 	var filemd5 *[16]byte
 	var ms string
 	var err error
 
-	u := dataurl + path[5:]
+	u := dataurl + path[5:] + "?inline=true"
 
 	r := connmap.Get(struct{}{})
 	if r == nil {
@@ -103,20 +101,11 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 	}
 
 	// 下载
-	resp, err = http.Get(u)
+	data, err = web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA())
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	if resp.ContentLength <= 0 {
-		return nil, errors.New("resp body len <= 0")
-	}
-	logrus.Printf("[file]从镜像下载数据%d字节...", resp.ContentLength)
-	// 读取数据
-	data, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	logrus.Printf("[file]从镜像下载数据%d字节...", len(data))
 	if len(data) == 0 {
 		return nil, errors.New("read body len <= 0")
 	}
