@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"os"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
 	"unsafe"
 
 	reg "github.com/fumiama/go-registry"
@@ -38,17 +40,49 @@ var (
 			process.GlobalInitMutex.Unlock()
 		}, nil,
 	})
+	ErrEmptyBody   = errors.New("read body len <= 0")
+	ErrInvalidPath = errors.New("invalid path")
 )
 
-// GetLazyData 获取懒加载数据
+// GetCustomLazyData 获取自定义懒加载数据, 不进行 md5 验证, 忽略 data/Abcde/ 路径.
+// 传入的 path 的前缀 data/abcde/
+// 在验证完 md5 后将被删去
+// 以便进行下载, 但保存时仍位于 data/abcde/xxx
+func GetCustomLazyData(dataurl, path string) ([]byte, error) {
+	_, p, found := strings.Cut(path[5:], "/")
+	if !found {
+		return nil, ErrInvalidPath
+	}
+	u := dataurl + p + "?inline=true"
+	if IsExist(path) {
+		return os.ReadFile(path)
+	}
+	// 下载
+	data, err := web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA())
+	if err != nil {
+		return nil, err
+	}
+	logrus.Printf("[file]从自定义镜像下载数据%d字节...", len(data))
+	if len(data) == 0 {
+		return nil, ErrEmptyBody
+	}
+	// 写入数据
+	return data, os.WriteFile(path, data, 0644)
+}
+
+// GetLazyData 获取公用懒加载数据
 // 传入的 path 的前缀 data/
 // 在验证完 md5 后将被删去
-// 以便进行下载
+// 以便进行下载, 但保存时仍位于 data/Abcde/xxx
 func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 	var data []byte
 	var filemd5 *[16]byte
 	var ms string
 	var err error
+
+	if !unicode.IsUpper([]rune(path[5:])[0]) {
+		panic("cannot get private data")
+	}
 
 	u := dataurl + path[5:] + "?inline=true"
 
@@ -107,7 +141,7 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 	}
 	logrus.Printf("[file]从镜像下载数据%d字节...", len(data))
 	if len(data) == 0 {
-		return nil, errors.New("read body len <= 0")
+		return nil, ErrEmptyBody
 	}
 	if filemd5 != nil {
 		if md5.Sum(data) == *filemd5 {
