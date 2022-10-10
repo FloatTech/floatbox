@@ -9,7 +9,7 @@ require (
 	github.com/fumiama/gofastTEA v0.0.10
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tidwall/gjson v1.14.3
-	github.com/wdvxdr1123/ZeroBot v1.5.2-0.20220917061201-be873b3fa0fb
+	github.com/wdvxdr1123/ZeroBot v1.5.2-0.20221010014449-b4fd5aee6033
 	golang.org/x/text v0.3.7
 )
 
