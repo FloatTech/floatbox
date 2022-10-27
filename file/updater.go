@@ -82,6 +82,7 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 			logrus.Warnln("[file]获取md5数据库失败:", err)
 			return
 		}
+		logrus.Infoln("[file]获取md5数据库")
 		go func() {
 			for range time.NewTicker(time.Hour).C {
 				r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama", 127, 127)
