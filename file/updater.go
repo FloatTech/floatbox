@@ -6,15 +6,12 @@ import (
 	"errors"
 	"os"
 	"strings"
-	"sync"
 	"time"
 	"unicode"
 	"unsafe"
 
 	reg "github.com/fumiama/go-registry"
 	"github.com/sirupsen/logrus"
-
-	"github.com/FloatTech/ttl"
 
 	"github.com/FloatTech/floatbox/process"
 	"github.com/FloatTech/floatbox/web"
@@ -25,21 +22,8 @@ const (
 )
 
 var (
-	mu      sync.Mutex
-	connmap = ttl.NewCacheOn(time.Second*3, [4]func(struct{}, *reg.Regedit){
-		func(s struct{}, r *reg.Regedit) {
-			logrus.Infoln("[file]已连接md5验证服务器")
-		},
-		func(s struct{}, r *reg.Regedit) {
-			logrus.Infoln("[file]重用md5验证服务器")
-		},
-		func(s struct{}, r *reg.Regedit) {
-			process.GlobalInitMutex.Lock()
-			_ = r.Close()
-			logrus.Infoln("[file]关闭到md5验证服务器的连接")
-			process.GlobalInitMutex.Unlock()
-		}, nil,
-	})
+	o              = process.NewOnce()
+	s              *reg.Storage
 	ErrEmptyBody   = errors.New("read body len <= 0")
 	ErrInvalidPath = errors.New("invalid path")
 )
@@ -86,26 +70,44 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 
 	u := dataurl + path[5:] + "?inline=true"
 
-	r := connmap.Get(struct{}{})
-	if r == nil {
-		mu.Lock()
-		if r == nil {
-			r = reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
-			connerr := r.ConnectIn(time.Second * 4)
-			if connerr != nil {
-				logrus.Warnln("[file]连接md5验证服务器失败:", connerr)
-				mu.Unlock()
-				return nil, connerr
-			}
-			connmap.Set(struct{}{}, r)
+	o.Do(func() {
+		r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama", 127, 127)
+		err := r.ConnectIn(time.Second * 4)
+		if err != nil {
+			logrus.Warnln("[file]连接md5验证服务器失败:", err)
+			return
 		}
-		mu.Unlock()
-	}
+		s, err = r.Cat()
+		if err != nil {
+			logrus.Warnln("[file]获取md5数据库失败:", err)
+			return
+		}
+		go func() {
+			for range time.NewTicker(time.Hour).C {
+				r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama", 127, 127)
+				err := r.ConnectIn(time.Second * 4)
+				if err != nil {
+					logrus.Warnln("[file]连接md5验证服务器失败:", err)
+					continue
+				}
+				ok, _ := r.IsMd5Equal(s.Md5)
+				if ok {
+					logrus.Infoln("[file]md5无变化")
+					continue
+				}
+				s, err = r.Cat()
+				if err != nil {
+					logrus.Warnln("[file]获取md5数据库失败:", err)
+					return
+				}
+			}
+		}()
+	})
 
-	if r == nil {
+	if s == nil {
 		logrus.Warnln("[file]无法连接到md5验证服务器, 请自行确保下载文件", path, "的正确性")
 	} else {
-		ms, err = r.Get(path)
+		ms, err = s.Get(path)
 		if err != nil || len(ms) != 16 {
 			logrus.Warnln("[file]获取md5失败, 请自行确保下载文件", path, "的正确性:", err)
 		} else {

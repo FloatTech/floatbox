@@ -1,12 +1,12 @@
-github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b h1:tvciXWq2nuvTbFeJGLDNIdRX3BI546D3O7k7vrVueZw=
-github.com/FloatTech/ttl v0.0.0-20220715042055-15612be72f5b/go.mod h1:fHZFWGquNXuHttu9dUYoKuNbm3dzLETnIOnm1muSfDs=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fumiama/cron v1.3.0 h1:ZWlwuexF+HQHl3cYytEE5HNwD99q+3vNZF1GrEiXCFo=
 github.com/fumiama/cron v1.3.0/go.mod h1:bz5Izvgi/xEUI8tlBN8BI2jr9Moo8N4or0KV8xXuPDY=
-github.com/fumiama/go-registry v0.1.6 h1:Ee/tXCCIR/xt8celhbbw0W/xDMdhAXLwy2YFBB/LWFk=
-github.com/fumiama/go-registry v0.1.6/go.mod h1:dIUVbiOgfk9oZcsgwDvNLC72i+ctibVukSXR/9bLviI=
+github.com/fumiama/go-registry v0.2.0 h1:W+suthFJUaP2+PynvoC+wMv1DI1+kf1wJi2it8r/hnw=
+github.com/fumiama/go-registry v0.2.0/go.mod h1:OBhXgDYzmVpHRdTEBmIMrHn5ojkYcEodPVuc1X531mU=
+github.com/fumiama/go-simple-protobuf v0.1.0 h1:rLzJgNqB6LHNDVMl81yyNt6ZKziWtVfu+ioF0edlEVw=
+github.com/fumiama/go-simple-protobuf v0.1.0/go.mod h1:5yYNapXq1tQMOZg9bOIVhQlZk9pQqpuFIO4DZLbsdy4=
 github.com/fumiama/gofastTEA v0.0.10 h1:JJJ+brWD4kie+mmK2TkspDXKzqq0IjXm89aGYfoGhhQ=
 github.com/fumiama/gofastTEA v0.0.10/go.mod h1:RIdbYZyB4MbH6ZBlPymRaXn3cD6SedlCu5W/HHfMPBk=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
