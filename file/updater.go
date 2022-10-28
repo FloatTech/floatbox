@@ -71,7 +71,7 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 	u := dataurl + path[5:] + "?inline=true"
 
 	o.Do(func() {
-		r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama", 127, 127)
+		r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
 		err := r.ConnectIn(time.Second * 4)
 		if err != nil {
 			logrus.Warnln("[file]连接md5验证服务器失败:", err)
@@ -85,7 +85,7 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 		logrus.Infoln("[file]获取md5数据库")
 		go func() {
 			for range time.NewTicker(time.Hour).C {
-				r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama", 127, 127)
+				r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
 				err := r.ConnectIn(time.Second * 4)
 				if err != nil {
 					logrus.Warnln("[file]连接md5验证服务器失败:", err)
@@ -96,11 +96,12 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 					logrus.Infoln("[file]md5无变化")
 					continue
 				}
-				s, err = r.Cat()
+				ns, err := r.Cat()
 				if err != nil {
 					logrus.Warnln("[file]获取md5数据库失败:", err)
 					return
 				}
+				s = ns
 			}
 		}()
 	})
