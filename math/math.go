@@ -21,6 +21,15 @@ func Min[T num](a, b T) T {
 	return a
 }
 
+// Ceil 向上整除(除数,被除数)
+func Ceil[T num](dividend, divisor T) T {
+	result := dividend / divisor
+	if dividend%divisor != 0 {
+		return result + 1
+	}
+	return result
+}
+
 // intSize is either 32 or 64.
 const intSize = 32 << (^uint(0) >> 63)
 
