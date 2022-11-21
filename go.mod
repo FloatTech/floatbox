@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/fumiama/cron v1.3.0
-	github.com/fumiama/go-registry v0.2.2
+	github.com/fumiama/go-registry v0.2.3
 	github.com/fumiama/gofastTEA v0.0.10
 	github.com/sirupsen/logrus v1.9.0
 	github.com/tidwall/gjson v1.14.3

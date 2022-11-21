@@ -58,7 +58,7 @@ func GetCustomLazyData(dataurl, path string) ([]byte, error) {
 // 传入的 path 的前缀 data/
 // 在验证完 md5 后将被删去
 // 以便进行下载, 但保存时仍位于 data/Abcde/xxx
-func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
+func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 	var data []byte
 	var filemd5 *[16]byte
 	var ms string
@@ -71,21 +71,26 @@ func GetLazyData(path string, isDataMustEqual bool) ([]byte, error) {
 	u := dataurl + path[5:] + "?inline=true"
 
 	o.Do(func() {
-		r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
-		err := r.ConnectIn(time.Second * 4)
+		r := reg.NewRegReader("reilia.fumiama.top:32664", stor, "fumiama")
+		s, err = r.Load()
 		if err != nil {
-			logrus.Warnln("[file]连接md5验证服务器失败:", err)
-			return
+			err = r.ConnectIn(time.Second * 4)
+			if err != nil {
+				logrus.Warnln("[file]连接md5验证服务器失败:", err)
+				return
+			}
+			s, err = r.Cat()
+			if err != nil {
+				logrus.Warnln("[file]获取md5数据库失败:", err)
+				return
+			}
+			logrus.Infoln("[file]获取md5数据库")
+		} else {
+			logrus.Infoln("[file]加载md5数据库")
 		}
-		s, err = r.Cat()
-		if err != nil {
-			logrus.Warnln("[file]获取md5数据库失败:", err)
-			return
-		}
-		logrus.Infoln("[file]获取md5数据库")
 		go func() {
 			for range time.NewTicker(time.Hour).C {
-				r := reg.NewRegReader("reilia.fumiama.top:32664", "fumiama")
+				r := reg.NewRegReader("reilia.fumiama.top:32664", stor, "fumiama")
 				err := r.ConnectIn(time.Second * 4)
 				if err != nil {
 					logrus.Warnln("[file]连接md5验证服务器失败:", err)

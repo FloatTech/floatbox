@@ -10,7 +10,11 @@ func TestLazy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = GetLazyData("data/Control/kanban.png", true)
+	err = os.MkdirAll("data/control", 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = GetLazyData("data/Control/kanban.png", "data/control/stor.spb", true)
 	if err != nil {
 		t.Fatal(err)
 	}
