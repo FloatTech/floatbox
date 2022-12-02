@@ -52,7 +52,7 @@ func JiebaKeyword[Ctx any](seg *jieba.Segmenter, getmsg func(Ctx) string, src ..
 			for _, msg := range msgs {
 				if strings.Contains(msg, str) {
 					p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
-					(*(*map[string]interface{})(unsafe.Pointer(&p)))["keyword"] = msg
+					(*(*map[string]interface{})(unsafe.Pointer(&p)))["keyword"] = str
 					return true
 				}
 			}
