@@ -86,6 +86,13 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 			}
 			logrus.Infoln("[file]获取md5数据库")
 		} else {
+			err = r.ConnectIn(time.Second * 4)
+			if err == nil {
+				ns, err := r.Cat()
+				if err == nil {
+					s = ns
+				}
+			}
 			logrus.Infoln("[file]加载md5数据库")
 		}
 		go func() {
