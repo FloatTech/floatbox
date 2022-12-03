@@ -86,14 +86,22 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 			}
 			logrus.Infoln("[file]获取md5数据库")
 		} else {
-			err = r.ConnectIn(time.Second * 4)
-			if err == nil {
-				ns, err := r.Cat()
-				if err == nil {
-					s = ns
+			logrus.Infoln("[file]加载md5数据库...")
+			if err = r.ConnectIn(time.Second * 4); err == nil {
+				if ok, _ := r.IsMd5Equal(s.Md5); !ok {
+					logrus.Infoln("[file]md5数据库不是最新, 更新中...")
+					if ns, err := r.Cat(); err == nil {
+						s = ns
+						logrus.Infoln("[file]md5数据库已更新")
+					} else {
+						logrus.Warnln("[file]md5数据库更新失败, 数据库不是最新:", err)
+					}
+				} else {
+					logrus.Infoln("[file]md5数据库已是最新")
 				}
+			} else {
+				logrus.Warnln("[file]连接md5验证服务器失败, 数据库可能不是最新:", err)
 			}
-			logrus.Infoln("[file]加载md5数据库")
 		}
 		go func() {
 			for range time.NewTicker(time.Hour).C {
