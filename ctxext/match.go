@@ -29,15 +29,13 @@ func ValueInList[Ctx any](getval func(Ctx) string, list ListGetter) func(Ctx) bo
 
 func JiebaFullMatch[Ctx any](seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
 	return func(ctx Ctx) bool {
-		msgs := seg.Cut(getmsg(ctx), true)
-		rand.Shuffle(len(msgs), func(i, j int) { msgs[i], msgs[j] = msgs[j], msgs[i] })
+		msgs := seg.CutForSearch(getmsg(ctx), true)
+		msg := msgs[rand.Intn(len(msgs))]
 		for _, str := range src {
-			for _, msg := range msgs {
-				if str == msg {
-					p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
-					(*(*map[string]interface{})(unsafe.Pointer(&p)))["matched"] = msg
-					return true
-				}
+			if str == msg {
+				p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
+				(*(*map[string]interface{})(unsafe.Pointer(&p)))["matched"] = msg
+				return true
 			}
 		}
 		return false
@@ -46,15 +44,13 @@ func JiebaFullMatch[Ctx any](seg *jieba.Segmenter, getmsg func(Ctx) string, src 
 
 func JiebaKeyword[Ctx any](seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
 	return func(ctx Ctx) bool {
-		msgs := seg.Cut(getmsg(ctx), true)
-		rand.Shuffle(len(msgs), func(i, j int) { msgs[i], msgs[j] = msgs[j], msgs[i] })
+		msgs := seg.CutForSearch(getmsg(ctx), true)
+		msg := msgs[rand.Intn(len(msgs))]
 		for _, str := range src {
-			for _, msg := range msgs {
-				if strings.Contains(msg, str) {
-					p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
-					(*(*map[string]interface{})(unsafe.Pointer(&p)))["keyword"] = str
-					return true
-				}
+			if strings.Contains(msg, str) {
+				p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
+				(*(*map[string]interface{})(unsafe.Pointer(&p)))["keyword"] = str
+				return true
 			}
 		}
 		return false
