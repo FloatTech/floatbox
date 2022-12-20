@@ -15,16 +15,9 @@ var (
 	nochkcrtcli = &http.Client{Transport: tr}
 )
 
-// DownloadTo 下载到路径
-//nolint: bodyclose
-func DownloadTo(url, file string, chkcrt bool) error {
-	var resp *http.Response
-	var err error
-	if chkcrt {
-		resp, err = http.Get(url)
-	} else {
-		resp, err = nochkcrtcli.Get(url)
-	}
+// NoChkCrtDownloadTo 下载到路径
+func NoChkCrtDownloadTo(url, file string) error {
+	resp, err := nochkcrtcli.Get(url)
 	if err == nil {
 		var f *os.File
 		f, err = os.Create(file)
