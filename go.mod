@@ -10,7 +10,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.14.4
-	github.com/wdvxdr1123/ZeroBot v1.6.6
+	github.com/wdvxdr1123/ZeroBot v1.6.7
 	golang.org/x/text v0.4.0
 )
 
