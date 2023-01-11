@@ -42,7 +42,7 @@ func GetCustomLazyData(dataurl, path string) ([]byte, error) {
 		return os.ReadFile(path)
 	}
 	// 下载
-	data, err := web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA())
+	data, err := web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 	}
 
 	// 下载
-	data, err = web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA())
+	data, err = web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA(), nil)
 	if err != nil {
 		return nil, err
 	}

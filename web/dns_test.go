@@ -38,6 +38,7 @@ func get(link string) ([]byte, error) {
 		NewPixivClient(), link, "GET",
 		"https://www.pixiv.net/",
 		"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:6.0) Gecko/20100101 Firefox/6.0",
+		nil,
 	)
 }
 
