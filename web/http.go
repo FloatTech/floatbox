@@ -182,3 +182,13 @@ func PostData(url, contentType string, body io.Reader) (data []byte, err error) 
 	}
 	return
 }
+
+// HeadRequestURL 获取跳转后的链接
+func HeadRequestURL(u string) (string, error) {
+	data, err := http.Head(u)
+	if err != nil {
+		return "", err
+	}
+	_ = data.Body.Close()
+	return data.Request.URL.String(), nil
+}
