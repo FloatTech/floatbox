@@ -63,6 +63,9 @@ func Abs64(x int64) int64 {
 
 // Partition 分片函数
 func Partition[T any](list []T, size int) (plist [][]T) {
+	if size <= 0 {
+		return nil
+	}
 	plen := int(math.Ceil(float64(len(list)) / float64(size)))
 	plist = make([][]T, plen)
 	for i := 0; i < plen-1; i++ {
