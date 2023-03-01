@@ -15,6 +15,7 @@ import (
 
 	"github.com/FloatTech/floatbox/process"
 	"github.com/FloatTech/floatbox/web"
+	"github.com/FloatTech/ttl"
 )
 
 const (
@@ -26,13 +27,19 @@ var (
 	s              *reg.Storage
 	ErrEmptyBody   = errors.New("read body len <= 0")
 	ErrInvalidPath = errors.New("invalid path")
+	lazycache      = ttl.NewCache[string, []byte](time.Hour)
 )
 
 // GetCustomLazyData 获取自定义懒加载数据, 不进行 md5 验证, 忽略 data/Abcde/ 路径.
-// 传入的 path 的前缀 data/abcde/
-// 在验证完 md5 后将被删去
+// 传入的 path 的前缀 data/abcde/ 将被删去
 // 以便进行下载, 但保存时仍位于 data/abcde/xxx
 func GetCustomLazyData(dataurl, path string) ([]byte, error) {
+	data := lazycache.Get(path)
+	if data != nil {
+		logrus.Debugln("[file]获取缓存的文件数据", path)
+		return data, nil
+	}
+	logrus.Debugln("[file]从自定义镜像下载", path)
 	_, p, found := strings.Cut(path[5:], "/")
 	if !found {
 		return nil, ErrInvalidPath
@@ -46,10 +53,10 @@ func GetCustomLazyData(dataurl, path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	logrus.Printf("[file]从自定义镜像下载数据%d字节...", len(data))
 	if len(data) == 0 {
 		return nil, ErrEmptyBody
 	}
+	lazycache.Set(path, data)
 	// 写入数据
 	return data, os.WriteFile(path, data, 0644)
 }
@@ -66,6 +73,12 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 
 	if !unicode.IsUpper([]rune(path[5:])[0]) {
 		panic("cannot get private data")
+	}
+
+	data = lazycache.Get(path)
+	if data != nil {
+		logrus.Debugln("[file]获取缓存的文件数据", path)
+		return data, nil
 	}
 
 	u := dataurl + path[5:] + "?inline=true"
@@ -180,5 +193,6 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 	// 写入数据
 	err = os.WriteFile(path, data, 0644)
 ret:
+	lazycache.Set(path, data)
 	return data, err
 }
