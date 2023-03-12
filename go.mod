@@ -9,6 +9,7 @@ require (
 	github.com/fumiama/go-registry v0.2.6
 	github.com/fumiama/gofastTEA v0.0.10
 	github.com/fumiama/jieba v0.0.0-20221203025406-36c17a10b565
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.14.4

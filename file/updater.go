@@ -11,6 +11,7 @@ import (
 	"unsafe"
 
 	reg "github.com/fumiama/go-registry"
+	"github.com/pbnjay/memory"
 	"github.com/sirupsen/logrus"
 
 	"github.com/FloatTech/floatbox/process"
@@ -27,7 +28,13 @@ var (
 	s              *reg.Storage
 	ErrEmptyBody   = errors.New("read body len <= 0")
 	ErrInvalidPath = errors.New("invalid path")
-	lazycache      = ttl.NewCache[string, []byte](time.Hour)
+	lazycache      = ttl.NewCache[string, []byte](func() time.Duration {
+		d := time.Duration(memory.TotalMemory()-memory.FreeMemory()) * 60 // 1G: 1073741824 * 60 ns
+		if d <= time.Millisecond {
+			return time.Millisecond // min cache time is 1 ms
+		}
+		return d // 1G is about 1 min
+	}())
 )
 
 // GetCustomLazyData 获取自定义懒加载数据, 不进行 md5 验证, 忽略 data/Abcde/ 路径.

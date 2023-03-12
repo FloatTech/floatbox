@@ -1,8 +1,12 @@
 package file
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLazy(t *testing.T) {
@@ -14,10 +18,12 @@ func TestLazy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = GetLazyData("data/Control/kanban.png", "data/control/stor.spb", true)
+	data, err := GetLazyData("data/Control/kanban.png", "data/control/stor.spb", true)
 	if err != nil {
 		t.Fatal(err)
 	}
+	b := md5.Sum(data)
+	assert.Equal(t, "806dedf39de375531f155285cf6ddb61", hex.EncodeToString(b[:]))
 }
 
 func TestCustLazy(t *testing.T) {
@@ -25,8 +31,10 @@ func TestCustLazy(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = GetCustomLazyData("https://gitcode.net/shudorcl/zbp-tarot/-/raw/master/", "data/Tarot/tarots.json")
+	data, err := GetCustomLazyData("https://gitcode.net/shudorcl/zbp-tarot/-/raw/master/", "data/Tarot/tarots.json")
 	if err != nil {
 		t.Fatal(err)
 	}
+	b := md5.Sum(data)
+	assert.Equal(t, "58d4f5f59f57c531767ada75f4f56090", hex.EncodeToString(b[:]))
 }
