@@ -1,12 +1,12 @@
 package ctxext
 
 import (
-	"math/rand"
 	"reflect"
-	"strings"
 	"unsafe"
 
 	"github.com/fumiama/jieba"
+
+	"github.com/FloatTech/floatbox/math"
 )
 
 // ListGetter 获得实时刷新的 list
@@ -27,29 +27,38 @@ func ValueInList[Ctx any](getval func(Ctx) string, list ListGetter) func(Ctx) bo
 	}
 }
 
-func JiebaFullMatch[Ctx any](seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
+// JiebaSimilarity sameper from 0.0 to 1.0
+func JiebaSimilarity[Ctx any](sameper float64, seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
 	return func(ctx Ctx) bool {
-		msgs := seg.CutForSearch(getmsg(ctx), true)
-		msg := msgs[rand.Intn(len(msgs))]
-		for _, str := range src {
-			if str == msg {
-				p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
-				(*(*map[string]interface{})(unsafe.Pointer(&p)))["matched"] = msg
-				return true
-			}
+		msgs := seg.CutAll(getmsg(ctx))
+		msgv := make(map[string]uint8, len(msgs)*2)
+		for _, msg := range msgs {
+			msgv[msg]++
 		}
-		return false
-	}
-}
-
-func JiebaKeyword[Ctx any](seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
-	return func(ctx Ctx) bool {
-		msgs := seg.CutForSearch(getmsg(ctx), true)
-		msg := msgs[rand.Intn(len(msgs))]
 		for _, str := range src {
-			if strings.Contains(msg, str) {
+			words := seg.CutAll(str)
+			testv := make(map[string]uint8, len(words)*2)
+			for _, word := range words {
+				testv[word]++
+			}
+			msgspace := make([]uint8, 0, len(msgv)+len(testv))
+			strspace := make([]uint8, 0, len(msgv)+len(testv))
+			for k, v := range msgv {
+				msgspace = append(msgspace, v)
+				if tv, ok := testv[k]; ok {
+					strspace = append(strspace, tv)
+					delete(testv, k)
+				} else {
+					strspace = append(strspace, 0)
+				}
+			}
+			for _, v := range testv {
+				msgspace = append(msgspace, 0)
+				strspace = append(strspace, v)
+			}
+			if math.Similarity(msgspace, strspace) > sameper {
 				p := reflect.ValueOf(ctx).Elem().FieldByName("State").UnsafePointer()
-				(*(*map[string]interface{})(unsafe.Pointer(&p)))["keyword"] = str
+				(*(*map[string]interface{})(unsafe.Pointer(&p)))["matched"] = str
 				return true
 			}
 		}
