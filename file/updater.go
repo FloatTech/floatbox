@@ -21,6 +21,7 @@ import (
 
 const (
 	dataurl = "https://gitcode.net/u011570312/zbpdata/-/raw/main/"
+	wifeurl = "https://gitcode.net/u011570312/zbpwife/-/raw/main/"
 )
 
 var (
@@ -88,7 +89,12 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 		return data, nil
 	}
 
-	u := dataurl + path[5:] + "?inline=true"
+	u := path[5:] + "?inline=true"
+	if strings.HasPrefix(path, "data/Wife/") {
+		u = wifeurl + u
+	} else {
+		u = dataurl + u
+	}
 
 	o.Do(func() {
 		r := reg.NewRegReader("reilia.fumiama.top:32664", stor, "fumiama")
