@@ -91,7 +91,7 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 
 	u := path[5:] + "?inline=true"
 	if strings.HasPrefix(path, "data/Wife/") {
-		u = wifeurl + u
+		u = wifeurl + u[5:]
 	} else {
 		u = dataurl + u
 	}
