@@ -2,11 +2,13 @@ package ctxext
 
 import (
 	"reflect"
+	"time"
 	"unsafe"
 
 	"github.com/fumiama/jieba"
 
 	"github.com/FloatTech/floatbox/math"
+	"github.com/FloatTech/ttl"
 )
 
 // ListGetter 获得实时刷新的 list
@@ -27,16 +29,22 @@ func ValueInList[Ctx any](getval func(Ctx) string, list ListGetter) func(Ctx) bo
 	}
 }
 
+var strcutcache = ttl.NewCache[string, []string](time.Hour * 24)
+
 // JiebaSimilarity sameper from 0.0 to 1.0
 func JiebaSimilarity[Ctx any](sameper float64, seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
 	return func(ctx Ctx) bool {
-		msgs := seg.CutAll(getmsg(ctx))
+		msgs := seg.Cut(getmsg(ctx), true)
 		msgv := make(map[string]uint8, len(msgs)*2)
 		for _, msg := range msgs {
 			msgv[msg]++
 		}
 		for _, str := range src {
-			words := seg.CutAll(str)
+			words := strcutcache.Get(str)
+			if len(words) == 0 {
+				words = seg.Cut(str, true)
+				strcutcache.Set(str, words)
+			}
 			testv := make(map[string]uint8, len(words)*2)
 			for _, word := range words {
 				testv[word]++
