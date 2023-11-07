@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	dataurl = "https://gitcode.net/u011570312/zbpdata/-/raw/main/"
-	wifeurl = "https://gitcode.net/u011570312/zbpwife/-/raw/main/"
+	dataurl = "https://gitea.seku.su/fumiama/zbpdata/raw/branch/main/"
+	wifeurl = "https://gitea.seku.su/fumiama/zbpwife/raw/branch/main/"
 )
 
 var (
@@ -57,7 +57,7 @@ func GetCustomLazyData(dataurl, path string) ([]byte, error) {
 		return os.ReadFile(path)
 	}
 	// 下载
-	data, err := web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA(), nil)
+	data, err := web.GetData(u)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
 	}
 
 	// 下载
-	data, err = web.RequestDataWith(web.NewTLS12Client(), u, "GET", "gitcode.net", web.RandUA(), nil)
+	data, err = web.GetData(u)
 	if err != nil {
 		return nil, err
 	}
