@@ -1,6 +1,8 @@
 // Package math 计算实用工具
 package math
 
+import "math"
+
 type num interface {
 	int | int8 | uint8 | int16 | uint16 | int32 | uint32 | int64 | uint64
 }
@@ -57,4 +59,18 @@ func Abs64(x int64) int64 {
 	// code with a branch.
 	// See Hacker's Delight, section 2-4.
 	return (x ^ m) - m
+}
+
+// Partition 分片函数
+func Partition[T any](list []T, size int) (plist [][]T) {
+	if size <= 0 {
+		return nil
+	}
+	plen := int(math.Ceil(float64(len(list)) / float64(size)))
+	plist = make([][]T, plen)
+	for i := 0; i < plen-1; i++ {
+		plist[i] = list[i*size : (i+1)*size]
+	}
+	plist[plen-1] = list[(plen-1)*size:]
+	return
 }
