@@ -2,7 +2,6 @@
 package file
 
 import (
-	"crypto/tls"
 	"errors"
 	"io"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/RomiChan/syncx"
+	trshttp "github.com/fumiama/terasu/http"
 )
 
 type dlcache syncx.Map[string, error]
@@ -33,7 +33,7 @@ func (dlc *dlcache) wait(url string) error {
 		}
 		return errDlStatusTimeout
 	}
-	time.AfterFunc(time.Minute*2, func() {
+	_ = time.AfterFunc(time.Minute, func() {
 		(*syncx.Map[string, error])(dlc).Delete(url)
 	})
 	return errDlContinue
@@ -43,13 +43,7 @@ func (dlc *dlcache) set(url string, err error) {
 	(*syncx.Map[string, error])(dlc).Store(url, err)
 }
 
-var (
-	tr = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	nochkcrtcli = &http.Client{Transport: tr}
-	dlmap       = dlcache{}
-)
+var dlmap = dlcache{}
 
 var (
 	errDlContinue      = errors.New("continue")
@@ -63,27 +57,10 @@ func DownloadTo(url, file string) error {
 	if err != errDlContinue {
 		return err
 	}
-	resp, err := http.Get(url)
-	if err == nil {
-		var f *os.File
-		f, err = os.Create(file)
-		if err == nil {
-			_, err = io.Copy(f, resp.Body)
-			f.Close()
-		}
-		resp.Body.Close()
+	resp, err := trshttp.Get(url)
+	if err != nil {
+		resp, err = http.Get(url)
 	}
-	dlmap.set(url, err)
-	return err
-}
-
-// NoChkCrtDownloadTo 下载到路径
-func NoChkCrtDownloadTo(url, file string) error {
-	err := dlmap.wait(url)
-	if err != errDlContinue {
-		return err
-	}
-	resp, err := nochkcrtcli.Get(url)
 	if err == nil {
 		var f *os.File
 		f, err = os.Create(file)

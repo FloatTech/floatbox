@@ -1,23 +1,32 @@
 package web
 
 import (
-	"context"
-	"crypto/tls"
-	"net"
-	"sync"
+	"github.com/fumiama/terasu/dns"
 )
 
-var (
-	// 定义resolver
-	resolver = &net.Resolver{
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			if IsSupportIPv6.Get() {
-				return tls.Dial("tcp", "[2001:4860:4860::8888]:853", nil) // 通过tls请求nameserver解析域名
-			}
-			return tls.Dial("tcp", "8.8.8.8:853", nil) // 通过tls请求nameserver解析域名
+func init() {
+	dns.IPv4Servers.Add(&dns.DNSConfig{
+		Servers: map[string][]string{
+			"dot.360.cn": {
+				"101.198.192.33:853",
+				"112.65.69.15:853",
+				"101.226.4.6:853",
+				"218.30.118.6:853",
+				"123.125.81.6:853",
+				"140.207.198.6:853",
+			},
 		},
-	}
-
-	iptables = make(map[string][]string)
-	iptmu    sync.RWMutex
-)
+	})
+	dns.IPv6Servers.Add(&dns.DNSConfig{
+		Servers: map[string][]string{
+			"dot.360.cn": {
+				"101.198.192.33:853",
+				"112.65.69.15:853",
+				"101.226.4.6:853",
+				"218.30.118.6:853",
+				"123.125.81.6:853",
+				"140.207.198.6:853",
+			},
+		},
+	})
+}

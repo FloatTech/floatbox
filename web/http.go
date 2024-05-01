@@ -2,28 +2,26 @@
 package web
 
 import (
-	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"strings"
-	"time"
 
-	"github.com/sirupsen/logrus"
+	trshttp "github.com/fumiama/terasu/http"
 )
 
 // NewDefaultClient ...
 func NewDefaultClient() *http.Client {
-	return &http.Client{}
+	cp := trshttp.DefaultClient
+	return &cp
 }
 
 // NewTLS12Client ...
 func NewTLS12Client() *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
+			DialTLSContext: trshttp.DefaultClient.Transport.(*http.Transport).DialTLSContext,
 			TLSClientConfig: &tls.Config{
 				MaxVersion: tls.VersionTLS12,
 			},
@@ -31,69 +29,9 @@ func NewTLS12Client() *http.Client {
 	}
 }
 
-var defaultpixiviptables = map[string]string{
-	"pixiv.net":   "210.140.92.183",
-	"i.pximg.net": "210.140.92.144",
-}
-
 // NewPixivClient P站特殊客户端
 func NewPixivClient() *http.Client {
-	return &http.Client{
-		// 解决中国大陆无法访问的问题
-		Transport: &http.Transport{
-			// 更改 dns
-			DialTLS: func(network, addr string) (net.Conn, error) {
-				host, port, err := net.SplitHostPort(addr)
-				if err != nil {
-					return nil, err
-				}
-
-				if host[:4] == "www." {
-					host = host[4:]
-				}
-
-				iptmu.RLock()
-				ips, ok := iptables[host]
-				iptmu.RUnlock()
-				if !ok {
-					ips, err = resolver.LookupHost(context.TODO(), host)                                               // 通过自定义nameserver查询域名
-					if err != nil || len(ips) == 0 || len(ips[0]) <= 11 || !strings.HasPrefix(ips[0], "210.140.92.") { // 被污染
-						ip, ok := defaultpixiviptables[host]
-						if !ok {
-							return nil, err
-						}
-						if len(ips) > 0 {
-							ips[0] = ip
-						} else {
-							ips = []string{ip}
-						}
-					}
-					logrus.Debugln("[web]google DNS get hosts", ips, "for", host)
-					iptmu.Lock()
-					iptables[host] = ips
-					iptmu.Unlock()
-				}
-
-				for _, ip := range ips {
-					// 创建链接
-					conn, err := tls.DialWithDialer(&net.Dialer{
-						Timeout: 2 * time.Second,
-					}, network, ip+":"+port, &tls.Config{
-						ServerName:         "-",
-						InsecureSkipVerify: true,
-						MaxVersion:         tls.VersionTLS12,
-					})
-					if err == nil {
-						logrus.Debugln("[web]dial host", host, ip+":"+port)
-						return conn, nil
-					}
-				}
-
-				return tls.Dial(network, addr, nil)
-			},
-			DisableKeepAlives: true,
-		},
-	}
+	return NewTLS12Client()
 }
 
 // RequestDataWith 使用自定义请求头获取数据
@@ -154,7 +92,10 @@ func RequestDataWithHeaders(client *http.Client, url, method string, setheaders 
 // GetData 获取数据
 func GetData(url string) (data []byte, err error) {
 	var response *http.Response
-	response, err = http.Get(url)
+	response, err = trshttp.Get(url)
+	if err != nil {
+		response, err = http.Get(url)
+	}
 	if err == nil {
 		if response.StatusCode != http.StatusOK {
 			s := fmt.Sprintf("status code: %d", response.StatusCode)
@@ -170,7 +111,10 @@ func GetData(url string) (data []byte, err error) {
 // PostData 获取数据
 func PostData(url, contentType string, body io.Reader) (data []byte, err error) {
 	var response *http.Response
-	response, err = http.Post(url, contentType, body)
+	response, err = trshttp.Post(url, contentType, body)
+	if err != nil {
+		response, err = http.Post(url, contentType, body)
+	}
 	if err == nil {
 		if response.StatusCode != http.StatusOK {
 			s := fmt.Sprintf("status code: %d", response.StatusCode)
@@ -184,8 +128,12 @@ func PostData(url, contentType string, body io.Reader) (data []byte, err error) 
 }
 
 // HeadRequestURL 获取跳转后的链接
-func HeadRequestURL(u string) (string, error) {
-	data, err := http.Head(u)
+func HeadRequestURL(u string) (newu string, err error) {
+	var data *http.Response
+	data, err = trshttp.Head(u)
+	if err != nil {
+		data, err = http.Head(u)
+	}
 	if err != nil {
 		return "", err
 	}
