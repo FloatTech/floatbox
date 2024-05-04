@@ -20,8 +20,11 @@ import (
 )
 
 const (
-	dataurl = "https://gitea.seku.su/fumiama/zbpdata/raw/branch/main/"
-	wifeurl = "https://gitea.seku.su/fumiama/zbpwife/raw/branch/main/"
+	originaldataurl = "https://github.com/FloatTech/zbpdata/raw/main/"
+	originalwifeurl = "https://github.com/FloatTech/zbpwife/raw/main/"
+
+	mirrordataurl = "https://gitea.seku.su/fumiama/zbpdata/raw/branch/main/"
+	mirrorwifeurl = "https://gitea.seku.su/fumiama/zbpwife/raw/branch/main/"
 )
 
 var (
@@ -73,7 +76,15 @@ func GetCustomLazyData(dataurl, path string) ([]byte, error) {
 // 传入的 path 的前缀 data/
 // 在验证完 md5 后将被删去
 // 以便进行下载, 但保存时仍位于 data/Abcde/xxx
-func GetLazyData(path, stor string, isDataMustEqual bool) ([]byte, error) {
+func GetLazyData(path, stor string, isDataMustEqual bool) (data []byte, err error) {
+	data, err = getLazyData(path, stor, originaldataurl, originalwifeurl, isDataMustEqual)
+	if err == nil {
+		return
+	}
+	return getLazyData(path, stor, mirrordataurl, mirrorwifeurl, isDataMustEqual)
+}
+
+func getLazyData(path, stor string, dataurl, wifeurl string, isDataMustEqual bool) ([]byte, error) {
 	var data []byte
 	var filemd5 *[16]byte
 	var ms string

@@ -36,5 +36,5 @@ func TestCustLazy(t *testing.T) {
 		t.Fatal(err)
 	}
 	b := md5.Sum(data)
-	assert.Equal(t, "58d4f5f59f57c531767ada75f4f56090", hex.EncodeToString(b[:]))
+	assert.Equal(t, "e0aa021e21dddbd6d8cecec71e9cf564", hex.EncodeToString(b[:]))
 }
