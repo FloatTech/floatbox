@@ -28,11 +28,19 @@ const (
 )
 
 var (
-	o              = process.NewOnce()
-	s              *reg.Storage
 	ErrEmptyBody   = errors.New("read body len <= 0")
 	ErrInvalidPath = errors.New("invalid path")
-	lazycache      = ttl.NewCache[string, []byte](func() time.Duration {
+)
+
+var (
+	// SkipOriginal 直接从镜像站获取数据
+	SkipOriginal = false
+)
+
+var (
+	o         = process.NewOnce()
+	s         *reg.Storage
+	lazycache = ttl.NewCache[string, []byte](func() time.Duration {
 		d := time.Duration(memory.TotalMemory()-memory.FreeMemory()) * 60 // 1G: 1073741824 * 60 ns
 		if d <= time.Millisecond {
 			return time.Millisecond // min cache time is 1 ms
@@ -77,9 +85,22 @@ func GetCustomLazyData(dataurl, path string) ([]byte, error) {
 // 在验证完 md5 后将被删去
 // 以便进行下载, 但保存时仍位于 data/Abcde/xxx
 func GetLazyData(path, stor string, isDataMustEqual bool) (data []byte, err error) {
-	data, err = getLazyData(path, stor, originaldataurl, originalwifeurl, isDataMustEqual)
-	if err == nil {
-		return
+	if !SkipOriginal {
+		t := time.NewTimer(time.Minute)
+		defer t.Stop()
+		ch := make(chan struct{})
+		go func() {
+			data, err = getLazyData(path, stor, originaldataurl, originalwifeurl, isDataMustEqual)
+			ch <- struct{}{}
+		}()
+		select {
+		case <-t.C:
+			SkipOriginal = true
+		case <-ch:
+			if err == nil {
+				return
+			}
+		}
 	}
 	return getLazyData(path, stor, mirrordataurl, mirrorwifeurl, isDataMustEqual)
 }
