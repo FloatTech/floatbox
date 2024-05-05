@@ -78,7 +78,7 @@ func RequestDataWithHeaders(client *http.Client, url, method string, setheaders 
 		if err != nil {
 			return
 		}
-		if response.StatusCode != http.StatusOK {
+		if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusPartialContent {
 			s := fmt.Sprintf("status code: %d", response.StatusCode)
 			err = errors.New(s)
 			return
