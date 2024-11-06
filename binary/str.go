@@ -1,11 +1,19 @@
 package binary
 
-import _ "unsafe" // to use linkname
+import (
+	"github.com/wdvxdr1123/ZeroBot/utils/helper"
+)
 
 // BytesToString 没有内存开销的转换
-//go:linkname BytesToString github.com/wdvxdr1123/ZeroBot/utils/helper.BytesToString
-func BytesToString(b []byte) string
+//
+// github.com/wdvxdr1123/ZeroBot/utils/helper.BytesToString
+func BytesToString(b []byte) string {
+	return helper.BytesToString(b)
+}
 
 // StringToBytes 没有内存开销的转换
-//go:linkname StringToBytes github.com/wdvxdr1123/ZeroBot/utils/helper.StringToBytes
-func StringToBytes(s string) (b []byte)
+//
+// github.com/wdvxdr1123/ZeroBot/utils/helper.StringToBytes
+func StringToBytes(s string) (b []byte) {
+	return helper.StringToBytes(s)
+}
