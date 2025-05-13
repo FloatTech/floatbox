@@ -5,7 +5,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/fumiama/jieba"
+	"github.com/go-ego/gse"
 
 	"github.com/FloatTech/floatbox/math"
 	"github.com/FloatTech/ttl"
@@ -32,7 +32,7 @@ func ValueInList[Ctx any](getval func(Ctx) string, list ListGetter) func(Ctx) bo
 var strcutcache = ttl.NewCache[string, []string](time.Hour * 24)
 
 // JiebaSimilarity sameper from 0.0 to 1.0
-func JiebaSimilarity[Ctx any](sameper float64, seg *jieba.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
+func JiebaSimilarity[Ctx any](sameper float64, seg *gse.Segmenter, getmsg func(Ctx) string, src ...string) func(Ctx) bool {
 	return func(ctx Ctx) bool {
 		msgs := seg.Cut(getmsg(ctx), true)
 		msgv := make(map[string]uint8, len(msgs)*2)
