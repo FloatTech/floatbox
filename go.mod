@@ -1,6 +1,6 @@
 module github.com/FloatTech/floatbox
 
-go 1.20
+go 1.24.0
 
 require (
 	github.com/FloatTech/ttl v0.0.0-20250224045156-012b1463287d
@@ -14,6 +14,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tidwall/gjson v1.18.0
 	github.com/wdvxdr1123/ZeroBot v1.8.2-0.20251002074418-56567b7fc282
+	golang.org/x/net v0.26.0
 	golang.org/x/text v0.29.0
 )
 
@@ -24,7 +25,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
-	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -8,30 +8,31 @@ import (
 	"io"
 	"net/http"
 
-	trshttp "github.com/fumiama/terasu/http"
+	"golang.org/x/net/http2"
 )
+
+// DefaultClient with http proxy
+var DefaultClient = NewDefaultClient()
 
 // NewDefaultClient ...
 func NewDefaultClient() *http.Client {
-	cp := trshttp.DefaultClient
-	return &cp
-}
-
-// NewTLS12Client ...
-func NewTLS12Client() *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			DialTLSContext: trshttp.DefaultClient.Transport.(*http.Transport).DialTLSContext,
-			TLSClientConfig: &tls.Config{
-				MaxVersion: tls.VersionTLS12,
-			},
-		},
+	cp := *http.DefaultClient
+	cp.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 	}
+	return &cp
 }
 
 // NewPixivClient P站特殊客户端
 func NewPixivClient() *http.Client {
-	return NewTLS12Client()
+	return &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				ServerName:         "-",
+			},
+		},
+	}
 }
 
 // RequestDataWith 使用自定义请求头获取数据
@@ -92,48 +93,41 @@ func RequestDataWithHeaders(client *http.Client, url, method string, setheaders 
 // GetData 获取数据
 func GetData(url string) (data []byte, err error) {
 	var response *http.Response
-	response, err = trshttp.Get(url)
+	response, err = DefaultClient.Get(url)
 	if err != nil {
-		response, err = http.Get(url)
+		return
 	}
-	if err == nil {
-		if response.StatusCode != http.StatusOK {
-			s := fmt.Sprintf("status code: %d", response.StatusCode)
-			err = errors.New(s)
-			return
-		}
-		data, err = io.ReadAll(response.Body)
-		response.Body.Close()
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		s := fmt.Sprintf("status code: %d", response.StatusCode)
+		err = errors.New(s)
+		return
 	}
+	data, err = io.ReadAll(response.Body)
 	return
 }
 
 // PostData 获取数据
 func PostData(url, contentType string, body io.Reader) (data []byte, err error) {
 	var response *http.Response
-	response, err = trshttp.Post(url, contentType, body)
+	response, err = DefaultClient.Post(url, contentType, body)
 	if err != nil {
-		response, err = http.Post(url, contentType, body)
+		return
 	}
-	if err == nil {
-		if response.StatusCode != http.StatusOK {
-			s := fmt.Sprintf("status code: %d", response.StatusCode)
-			err = errors.New(s)
-			return
-		}
-		data, err = io.ReadAll(response.Body)
-		response.Body.Close()
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		s := fmt.Sprintf("status code: %d", response.StatusCode)
+		err = errors.New(s)
+		return
 	}
+	data, err = io.ReadAll(response.Body)
 	return
 }
 
 // HeadRequestURL 获取跳转后的链接
 func HeadRequestURL(u string) (newu string, err error) {
 	var data *http.Response
-	data, err = trshttp.Head(u)
-	if err != nil {
-		data, err = http.Head(u)
-	}
+	data, err = DefaultClient.Head(u)
 	if err != nil {
 		return "", err
 	}

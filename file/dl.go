@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/RomiChan/syncx"
-	trshttp "github.com/fumiama/terasu/http"
 )
 
 type dlcache syncx.Map[string, error]
@@ -57,10 +56,7 @@ func DownloadTo(url, file string) error {
 	if err != errDlContinue {
 		return err
 	}
-	resp, err := trshttp.Get(url)
-	if err != nil {
-		resp, err = http.Get(url)
-	}
+	resp, err := http.Get(url)
 	if err == nil {
 		var f *os.File
 		f, err = os.Create(file)
